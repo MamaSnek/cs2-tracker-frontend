@@ -1,6 +1,5 @@
-// === EDIT THIS LINE to your backend URL ===
-const API_URL = "https://cs2-backend-48tz.onrender.com"; // no trailing slash
-// ==========================================
+// Use Vercel rewrite proxy so there's no CORS.
+const API_URL = "/api"; // <- do not change
 
 const F = new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 2 });
 
@@ -41,7 +40,6 @@ function render() {
   const q = (els.search.value || '').toLowerCase().trim();
   const filtered = data.filter(r => !q || r.item_name.toLowerCase().includes(q));
 
-  // sort
   filtered.sort((a, b) => {
     const av = a[sortKey]; const bv = b[sortKey];
     if (av == null && bv == null) return 0;
@@ -51,7 +49,6 @@ function render() {
     return sortDir === 'asc' ? av - bv : bv - av;
   });
 
-  // rows
   els.rows.innerHTML = filtered.map(r => {
     const paid = r.paid_price ?? null;
     const curr = r.current_price ?? null;
@@ -72,7 +69,6 @@ function render() {
     </tr>`;
   }).join('');
 
-  // summary
   const withCurr = filtered.filter(r => r.current_price != null);
   const totalValue = withCurr.reduce((s, r) => s + r.current_price * r.quantity, 0);
   const totalPL = filtered.reduce((s, r) => s + (r.profit_total ?? 0), 0);
@@ -94,18 +90,11 @@ function render() {
 async function load() {
   els.refresh.disabled = true;
   try {
-    // Quick ping first so errors are clearer:
-    const h = await fetch(`${API_URL}/health`, { mode: 'cors', cache: 'no-store', referrerPolicy: 'no-referrer' });
-    if (!h.ok) {
-      showError(`API /health failed: HTTP ${h.status}`);
-      els.refresh.disabled = false; return;
-    }
+    const h = await fetch(`${API_URL}/health`, { cache: 'no-store' });
+    if (!h.ok) { showError(`API /health failed: HTTP ${h.status}`); els.refresh.disabled = false; return; }
 
-    const r = await fetch(`${API_URL}/prices`, { mode: 'cors', cache: 'no-store', referrerPolicy: 'no-referrer' });
-    if (!r.ok) {
-      showError(`API /prices failed: HTTP ${r.status}`);
-      els.refresh.disabled = false; return;
-    }
+    const r = await fetch(`${API_URL}/prices`, { cache: 'no-store' });
+    if (!r.ok) { showError(`API /prices failed: HTTP ${r.status}`); els.refresh.disabled = false; return; }
 
     const ct = r.headers.get('content-type') || '';
     if (!ct.includes('application/json')) {
@@ -115,11 +104,7 @@ async function load() {
     }
 
     const json = await r.json();
-    if (!Array.isArray(json)) {
-      showError('API /prices returned something that is not a list.');
-      els.refresh.disabled = false; return;
-    }
-
+    if (!Array.isArray(json)) { showError('API /prices returned non-list JSON'); els.refresh.disabled = false; return; }
     data = json;
   } catch (e) {
     showError(`Fetch error: ${e?.message || e}`);
@@ -133,7 +118,6 @@ async function load() {
 els.search.addEventListener('input', render);
 els.refresh.addEventListener('click', load);
 
-// click-to-sort
 document.querySelectorAll('th[data-sort]').forEach(th => {
   th.addEventListener('click', () => {
     const k = th.getAttribute('data-sort');
@@ -143,5 +127,4 @@ document.querySelectorAll('th[data-sort]').forEach(th => {
   });
 });
 
-// first load
 load();
