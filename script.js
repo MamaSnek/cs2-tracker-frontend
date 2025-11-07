@@ -19,6 +19,17 @@ let data = [];
 let sortKey = 'profit_total';
 let sortDir = 'desc';
 
+function showError(msg) {
+  let bar = document.getElementById('errbar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'errbar';
+    bar.style.cssText = 'background:#3a0d0d;color:#ffd2d2;padding:10px 12px;border:1px solid #5a1a1a;border-radius:8px;margin:12px 0;';
+    document.querySelector('.container').prepend(bar);
+  }
+  bar.textContent = msg;
+}
+
 function cls(val) {
   if (val == null) return '';
   if (val > 0) return 'pos';
@@ -76,7 +87,6 @@ function render() {
   els.totalPL.className = 'value ' + cls(totalPL);
   els.avgPct.textContent = (avgPct != null) ? (avgPct>0?'+':'') + avgPct.toFixed(2) + '%' : '—';
 
-  // last updated = latest timestamp we have
   const latest = data.map(r => r.timestamp_utc).filter(Boolean).map(t => +new Date(t)).sort((a,b)=>b-a)[0];
   els.lastUpdated.textContent = latest ? new Date(latest).toLocaleString('en-CA') : '—';
 }
@@ -84,11 +94,35 @@ function render() {
 async function load() {
   els.refresh.disabled = true;
   try {
-    const r = await fetch(`${API_URL}/prices`, { cache: 'no-store' });
+    // Quick ping first so errors are clearer:
+    const h = await fetch(`${API_URL}/health`, { mode: 'cors', cache: 'no-store', referrerPolicy: 'no-referrer' });
+    if (!h.ok) {
+      showError(`API /health failed: HTTP ${h.status}`);
+      els.refresh.disabled = false; return;
+    }
+
+    const r = await fetch(`${API_URL}/prices`, { mode: 'cors', cache: 'no-store', referrerPolicy: 'no-referrer' });
+    if (!r.ok) {
+      showError(`API /prices failed: HTTP ${r.status}`);
+      els.refresh.disabled = false; return;
+    }
+
+    const ct = r.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) {
+      const txt = await r.text();
+      showError(`API /prices returned non-JSON. First 80 chars: ${txt.slice(0,80)}`);
+      els.refresh.disabled = false; return;
+    }
+
     const json = await r.json();
-    data = Array.isArray(json) ? json : [];
+    if (!Array.isArray(json)) {
+      showError('API /prices returned something that is not a list.');
+      els.refresh.disabled = false; return;
+    }
+
+    data = json;
   } catch (e) {
-    console.error(e);
+    showError(`Fetch error: ${e?.message || e}`);
     data = [];
   } finally {
     els.refresh.disabled = false;
