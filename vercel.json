@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://cs2-backend-48tz.onrender.com/:path*"
+    }
+  ]
+}
