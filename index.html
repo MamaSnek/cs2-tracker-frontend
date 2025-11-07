@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CS2 Portfolio Tracker</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>CS2 Portfolio</h1>
+    <div class="right">
+      <input id="search" type="search" placeholder="Search items…" />
+      <button id="refresh">Refresh</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="cards">
+      <div class="card">
+        <div class="label">Portfolio Value</div>
+        <div id="totalValue" class="value">—</div>
+      </div>
+      <div class="card">
+        <div class="label">Total P/L</div>
+        <div id="totalPL" class="value">—</div>
+      </div>
+      <div class="card">
+        <div class="label">Avg % Change</div>
+        <div id="avgPct" class="value">—</div>
+      </div>
+      <div class="card">
+        <div class="label">Last Updated</div>
+        <div id="lastUpdated" class="value mono">—</div>
+      </div>
+    </section>
+
+    <section class="tablewrap">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th data-sort="item_name">Item</th>
+            <th data-sort="source">Source</th>
+            <th data-sort="paid_price">Paid</th>
+            <th data-sort="current_price">Current</th>
+            <th data-sort="profit_per_item">P/L (ea)</th>
+            <th data-sort="percent_change">% Chg</th>
+            <th data-sort="quantity">Qty</th>
+            <th data-sort="profit_total">P/L (total)</th>
+            <th>Updated</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer class="footer">Prices load fresh when you open the page. Green = profit, red = loss. CAD.</footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
